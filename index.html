@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JavaScript Closures & Scope Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header class="page-header">
+      <h1>JavaScript Closures & Scope Playground</h1>
+      <p class="subtitle">Interactive demo of private state closures, lexical scope resolution, and sliding-window rate limiting.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Bank Account Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Bank Account</h2>
+          <span class="badge">Encapsulated State</span>
+        </div>
+
+        <p class="muted">Current Balance</p>
+        <h2 id="balance">₹1,000.00</h2>
+        <p class="desc">Balance variable is encapsulated inside a closure. Direct object property access returns <code>undefined</code>.</p>
+
+        <form id="bank-form">
+          <label for="amount">Amount (₹)</label>
+          <div class="input-wrap">
+            <input id="amount" type="number" min="0.01" step="0.01" placeholder="Enter amount (e.g. 250.00)" required>
+          </div>
+          <div class="buttons">
+            <button type="submit" name="action" value="deposit" class="btn btn-primary">Deposit</button>
+            <button type="submit" name="action" value="withdraw" class="btn btn-secondary">Withdraw</button>
+          </div>
+        </form>
+
+        <p id="bank-message" role="status">Ready for your first transaction.</p>
+
+        <details>
+          <summary>Inspect Privacy</summary>
+          <div class="details-body">
+            <p>The variable <code>balance</code> is enclosed within <code>createBankAccount()</code>. External access cannot reach it directly.</p>
+            <button id="privacy" class="btn btn-secondary btn-sm" type="button">Test account.balance</button>
+            <pre id="privacy-result">Click above to test direct property access vs getBalance()</pre>
+          </div>
+        </details>
+
+        <h3>Transaction History</h3>
+        <ol id="history">
+          <li>Account opened with ₹1,000.00</li>
+        </ol>
+      </section>
+
+      <!-- Rate Limiter Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Rate Limiter</h2>
+          <span class="badge">3 calls / 10s window</span>
+        </div>
+
+        <p class="muted">Sliding-Window Wrapper</p>
+        <h2>API Throttling</h2>
+        <p class="desc">Wraps a function and stores request timestamps in its closure to prevent call bursts.</p>
+
+        <div class="slots" aria-hidden="true">
+          <i></i>
+          <i></i>
+          <i></i>
+        </div>
+
+        <p id="limit-status" role="status">3 slots available</p>
+
+        <button id="api-call" class="btn btn-primary btn-block">Send Request ↗</button>
+        <p id="api-message" role="status">Click rapidly to test the 3-request rate limit.</p>
+
+        <h3>Request Log</h3>
+        <ol id="request-log">
+          <li>No requests yet.</li>
+        </ol>
+
+        <details>
+          <summary>How the Closure Works</summary>
+          <div class="details-body">
+            <p>The wrapper holds an isolated <code>timestamps</code> array in its closure. On each call, expired timestamps are filtered out before evaluating if the limit has been reached.</p>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <!-- Concepts & Hoisting Runner Card -->
+    <section class="card concepts">
+      <div class="card-header">
+        <h2>Scope, Closures & Hoisting Explorer</h2>
+        <span class="badge">Live Playground</span>
+      </div>
+
+      <div class="concept-grid">
+        <article class="concept-item">
+          <h3>Lexical Scope</h3>
+          <p>Variables resolve based on where functions are defined, not where they are called.</p>
+          <pre><code>const label = "outer";
+function read() { return label; }
+function caller() {
+  const label = "caller";
+  return read(); // "outer"
+}</code></pre>
+        </article>
+
+        <article class="concept-item">
+          <h3>Execution Context</h3>
+          <p>Each call pushes a context to the stack. Closures preserve referenced variables after return.</p>
+          <pre><code>Global Context
+ └─ createBankAccount() [Returns]
+     └─ closure captures balance
+ └─ account.deposit() [Runs & Mutates]</code></pre>
+        </article>
+
+        <article class="concept-item">
+          <h3>Closure Isolation</h3>
+          <p>Different instances created from the same factory maintain separate memory environments.</p>
+          <pre><code>const a = createBankAccount(100);
+const b = createBankAccount(200);
+a.deposit(50);
+a.getBalance(); // 150
+b.getBalance(); // 200 (Independent)</code></pre>
+        </article>
+
+        <article class="concept-item">
+          <h3>Hoisting & TDZ</h3>
+          <p><code>var</code> hoists with <code>undefined</code>. <code>let</code> and <code>const</code> stay in Temporal Dead Zone.</p>
+          <pre><code>console.log(a); // undefined
+var a = 10;
+
+// Accessing b before declaration:
+// ReferenceError: TDZ
+let b = 20;</code></pre>
+        </article>
+      </div>
+
+      <div class="concept-actions">
+        <button id="run-concepts" class="btn btn-secondary">Run Runtime Scope & Hoisting Tests</button>
+        <pre id="concept-output" role="status">Click above to execute checks and view results.</pre>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Declaration</th>
+              <th>Scope</th>
+              <th>Before Initialization</th>
+              <th>Reassignable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>var</code></td>
+              <td>Function</td>
+              <td><code>undefined</code></td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><code>let</code></td>
+              <td>Block <code>{}</code></td>
+              <td><code>ReferenceError</code> (TDZ)</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><code>const</code></td>
+              <td>Block <code>{}</code></td>
+              <td><code>ReferenceError</code> (TDZ)</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td><code>function</code></td>
+              <td>Block / Function</td>
+              <td>Callable (Hoisted)</td>
+              <td>Yes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="bank-account.js"></script>
+  <script src="rate-limiter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
